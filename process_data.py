@@ -1,41 +1,41 @@
 import csv
 import os
 
-DATA_DIR = "./data"
-OUTPUT_FILE = "processed_data.csv"
+DATA_DIRECTORY = "./data"
+OUTPUT_FILE_PATH = "./formatted_sales_data.csv"
 
-with open(OUTPUT_FILE, "w", newline="") as out:
-    writer = csv.writer(out)
+# open the output file
+with open(OUTPUT_FILE_PATH, "w") as output_file:
+    writer = csv.writer(output_file)
+
+    # add a csv header
     writer.writerow(["sales", "date", "region"])
 
-    for filename in os.listdir(DATA_DIR):
-        if not filename.endswith(".csv"):
-            continue
+    # go through all CSV files in the data folder
+    for file_name in os.listdir(DATA_DIRECTORY):
+        if not file_name.endswith(".csv"):
+            continue  # skip non‑CSV files
 
-        with open(os.path.join(DATA_DIR, filename), "r") as f:
-            reader = csv.reader(f)
+        with open(f"{DATA_DIRECTORY}/{file_name}", "r") as input_file:
+            reader = csv.reader(input_file)
 
-            # Skip header
-            next(reader, None)
-
+            row_index = 0
             for row in reader:
-                # Skip corrupted or incomplete rows
-                if len(row) < 5:
+
+                # skip header rows AND skip broken rows
+                if row_index == 0 or len(row) < 5:
+                    row_index += 1
                     continue
 
-                product, price_raw, qty_raw, date, region = row
+                product, raw_price, qty, date, region = row
 
-                if product.strip().lower() == "pink morsel":
-                    try:
-                        # Clean price → remove $ and convert to float
-                        price = float(price_raw.replace("$", "").strip())
+                # we ONLY want "pink morsel"
+                if product.lower() == "pink morsel":
+                    price = float(raw_price.replace("$", ""))
+                    sale_amount = price * int(qty)
 
-                        qty = int(qty_raw.strip())
+                    writer.writerow([sale_amount, date, region])
 
-                        sale_value = price * qty
+                row_index += 1
 
-                        writer.writerow([sale_value, date, region])
-
-                    except:
-                        # Skip bad rows
-                        continue
+print("DONE — formatted_sales_data.csv created successfully!")
