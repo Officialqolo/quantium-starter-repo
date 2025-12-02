@@ -1,25 +1,41 @@
-import pandas as pd
-import glob
+import csv
+import os
 
-# Load all three CSV files
-files = glob.glob("data/daily_sales_data_*.csv")
+DATA_DIR = "./data"
+OUTPUT_FILE = "processed_data.csv"
 
-dfs = []
+with open(OUTPUT_FILE, "w", newline="") as out:
+    writer = csv.writer(out)
+    writer.writerow(["sales", "date", "region"])
 
-for file in files:
-    df = pd.read_csv(file)
-    # Keep ONLY Pink Morsels
-    df = df[df["product"] == "pink morsel"]
-    # Calculate sales
-    df["sales"] = df["quantity"] * df["price"]
-    # Keep only required columns
-    df = df[["sales", "date", "region"]]
-    dfs.append(df)
+    for filename in os.listdir(DATA_DIR):
+        if not filename.endswith(".csv"):
+            continue
 
-# Combine all into one DataFrame
-final_df = pd.concat(dfs, ignore_index=True)
+        with open(os.path.join(DATA_DIR, filename), "r") as f:
+            reader = csv.reader(f)
 
-# Save to output file
-final_df.to_csv("data/formatted_sales_data.csv", index=False)
+            # Skip header
+            next(reader, None)
 
-print("DONE — formatted_sales_data.csv created!")
+            for row in reader:
+                # Skip corrupted or incomplete rows
+                if len(row) < 5:
+                    continue
+
+                product, price_raw, qty_raw, date, region = row
+
+                if product.strip().lower() == "pink morsel":
+                    try:
+                        # Clean price → remove $ and convert to float
+                        price = float(price_raw.replace("$", "").strip())
+
+                        qty = int(qty_raw.strip())
+
+                        sale_value = price * qty
+
+                        writer.writerow([sale_value, date, region])
+
+                    except:
+                        # Skip bad rows
+                        continue

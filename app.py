@@ -1,28 +1,24 @@
-import dash
-from dash import dcc, html
-import plotly.express as px
 import pandas as pd
+from dash import Dash, html, dcc
+import plotly.express as px
 
-# Load processed CSV
-df = pd.read_csv("data/formatted_sales_data.csv")
-df['date'] = pd.to_datetime(df['date'])
+df = pd.read_csv("processed_data.csv")
+df["date"] = pd.to_datetime(df["date"])
+df = df.sort_values("date")
 
-# Create line chart
+app = Dash(__name__)
+
 fig = px.line(
     df,
-    x='date',
-    y='sales',
-    color='region',
-    title='Pink Morsel Sales Over Time',
-    labels={'date':'Date', 'sales':'Sales', 'region':'Region'}
+    x="date",
+    y="sales",
+    title="Pink Morsel Sales Over Time"
 )
 
-# Dash app
-app = dash.Dash(__name__)
 app.layout = html.Div([
-    html.H1("Soul Foods - Pink Morsel Sales Visualiser", style={"textAlign":"center"}),
+    html.H1("Pink Morsel Visualizer"),
     dcc.Graph(figure=fig)
 ])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
